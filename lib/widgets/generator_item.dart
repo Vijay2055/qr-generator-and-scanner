@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_scanner/model.dart/generate_qr_model.dart';
 
-class GeneratorItem extends StatelessWidget {
+class GeneratorItem extends ConsumerWidget {
   final bool isFirst;
   final bool isLast;
   final GenerateQrModel qrModel;
-  final Function(GenerateQrModel qrModel, BuildContext context) onTap;
+  final Function(GenerateQrModel qrModel, BuildContext context, WidgetRef ref)
+      onTap;
 
   const GeneratorItem(
       {super.key,
@@ -15,7 +17,7 @@ class GeneratorItem extends StatelessWidget {
       required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (isFirst) {
       return InkWell(
         borderRadius: const BorderRadius.only(
@@ -23,7 +25,7 @@ class GeneratorItem extends StatelessWidget {
           topRight: Radius.circular(12),
         ),
         onTap: () {
-          onTap(qrModel, context);
+          onTap(qrModel, context, ref);
         },
         child: ListTile(
           leading: Icon(qrModel.icon),
@@ -41,7 +43,7 @@ class GeneratorItem extends StatelessWidget {
           bottomRight: Radius.circular(12),
         ),
         onTap: () {
-          onTap(qrModel, context);
+          onTap(qrModel, context, ref);
         },
         child: ListTile(
           leading: Icon(qrModel.icon),
@@ -53,7 +55,7 @@ class GeneratorItem extends StatelessWidget {
 
     return ListTile(
       onTap: () {
-        onTap(qrModel, context);
+        onTap(qrModel, context, ref);
       },
       leading: Icon(qrModel.icon),
       title: Text(qrModel.title.name[0].toUpperCase() +

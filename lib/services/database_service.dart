@@ -17,7 +17,7 @@ class DatabaseService {
     final dbPath = path.join(await getDatabasesPath(), 'scan_history.db');
     final db = await openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
     CREATE TABLE scan_history (
@@ -26,16 +26,10 @@ class DatabaseService {
       isFav INTEGER NOT NULL,
       content TEXT NOT NULL,
       image TEXT NOT NULL,
-     
-      category INTEGER NOT NULL
+      category INTEGER NOT NULL,
+      title TEXT NOT NULL
     );
   ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          // Add the new columns if upgrading from version 1 to 2
-          await db.execute("ALTER TABLE scan_history ADD COLUMN title TEXT");
-        }
       },
     );
 
@@ -51,6 +45,16 @@ class DatabaseService {
     );
 
     return id;
+  }
+
+  Future<void> updateContent(int id, String content, String filePath) async {
+    final db = await database;
+    await db.update(
+      'scan_history',
+      {'content': content, 'image': filePath},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<List<ScanHistoryModel>> getHistory() async {
@@ -90,5 +94,16 @@ class DatabaseService {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<int> deleteQr(int id) async {
+    final db = await database;
+    final count = await db.delete(
+      'scan_history',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    return count;
   }
 }

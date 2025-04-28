@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,9 +9,6 @@ import 'package:qr_scanner/providers/scan_state.dart';
 import 'package:qr_scanner/screens/scanned_data_screen.dart';
 import 'package:qr_scanner/utilities/getFomatedDate.dart';
 import 'package:qr_scanner/utility/uint_to_file.dart';
-
-import 'package:path_provider/path_provider.dart' as syspaths;
-import 'package:path/path.dart' as path;
 
 /// Button widget for analyze image function
 class AnalyzeImageButton extends ConsumerStatefulWidget {
@@ -34,20 +29,21 @@ class _AnalyzeImageButtonState extends ConsumerState<AnalyzeImageButton> {
 
   void _playSound() async {
     await _audioPlayer.play(AssetSource('audio/sound.mp3'));
-    print('played');
   }
 
   void onScanned(String rawValue, BuildContext context, Uint8List image,
       String dateTime) async {
-    File imageFile = await uint8ListToFile(image, 'scanned_qr.png');
-    final appDir = await syspaths.getApplicationDocumentsDirectory();
-    final fileName = path.basename(imageFile.path);
-    final copiedImage = await imageFile.copy('${appDir.path}/$fileName');
+    // final uuid = Uuid().v4();
+    // File imageFile = await uint8ListToFile(image, 'scanned_qr_$uuid.png');
+    // final appDir = await syspaths.getApplicationDocumentsDirectory();
+    // final fileName = path.basename(imageFile.path);
+    // final copiedImage = await imageFile.copy('${appDir.path}/$fileName');
+
+    final imagePath = await getFilePath(image);
 
     final id = await ref
         .read(scanHistoryProvider.notifier)
-        .insertData(rawValue, copiedImage.path, currentDateTime);
-    print("id is $id");
+        .insertData(rawValue, imagePath, currentDateTime);
 
     widget.controller.stop();
 
@@ -105,8 +101,8 @@ class _AnalyzeImageButtonState extends ConsumerState<AnalyzeImageButton> {
     }
 
     final snackBar = barcodes.barcodes.isNotEmpty
-        ? SnackBar(
-            content: Text(barcodes.raw.toString()),
+        ? const SnackBar(
+            content: Text("Barcode found!"),
             backgroundColor: Colors.green,
           )
         : const SnackBar(
@@ -124,6 +120,8 @@ class _AnalyzeImageButtonState extends ConsumerState<AnalyzeImageButton> {
         leading: const Icon(Icons.image),
         title: const Text("Scan Image"),
         onTap: () {
+          Navigator.of(context).pop();
+          Navigator.of(context).popUntil((route) => route.isFirst);
           _onPressed(
             context,
           );

@@ -33,9 +33,15 @@ class ScanState extends StateNotifier<List<ScanHistoryModel>> {
     return id;
   }
 
-  Future<void> getSingleData(int id) async {
+  Future<ScanHistoryModel?> getSingleData(int id) async {
     final db = ref.read(databaseProvider);
-    await db.getSingleHistory(id);
+    return await db.getSingleHistory(id);
+  }
+
+  Future<void> updateCont(int id, String cont, String path) async {
+    final db = ref.read(databaseProvider);
+    await db.updateContent(id, cont, path);
+    loadScans();
   }
 
   Future<void> updateTitle(int id, String title) async {
@@ -53,6 +59,15 @@ class ScanState extends StateNotifier<List<ScanHistoryModel>> {
     final db = ref.read(databaseProvider);
     await db.updateFav(id, isFav);
     loadScans();
+  }
+
+  Future<int> deleteQR(int id) async {
+    final db = ref.read(databaseProvider);
+    final count = await db.deleteQr(id);
+    if (count > 0) {
+      loadScans();
+    }
+    return count;
   }
 }
 

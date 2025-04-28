@@ -31,6 +31,7 @@ class FavScreen extends ConsumerWidget {
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (ctx) => ScannedDataScreen(
                                       id: id!,
+                                  isFromOtherScreen: true,
                                     )));
                           },
                           leading: Icon(categoryIcon(favData[index].category)),

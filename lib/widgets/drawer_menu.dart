@@ -50,24 +50,27 @@ class DrawerMenu extends StatelessWidget {
             leading: const Icon(Icons.history),
             title: const Text("History"),
             onTap: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (ctx) => const HistoryScreen()));
+              Navigator.of(context).pop();
+              Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (ctx) => const HistoryScreen()),(route)=>route.isFirst);
             },
           ),
           ListTile(
             leading: const Icon(Icons.star),
             title: const Text("Favorite"),
             onTap: () {
+              Navigator.of(context).pop();
               Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (ctx) => const FavScreen()));
+                  .pushAndRemoveUntil(MaterialPageRoute(builder: (ctx) => const FavScreen()),(route)=>route.isFirst);
             },
           ),
           ListTile(
             leading: const Icon(Icons.qr_code),
             title: const Text("Generate Qr Code"),
             onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (ctx) => const GenerateQrScreen()));
+              Navigator.of(context).pop();
+              Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
+                  builder: (ctx) => const GenerateQrScreen()),(route)=>route.isFirst);
             },
           )
         ],

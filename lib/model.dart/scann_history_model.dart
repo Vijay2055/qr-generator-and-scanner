@@ -8,8 +8,8 @@ enum Category {
   email,
   sms,
   geo,
- 
-   ean_8,
+
+  ean_8,
   ean_13,
   upc_e,
   upc_a,
@@ -40,6 +40,7 @@ class ScanHistoryModel {
   final String image;
   final String title;
   final Category category;
+
 
   // convert object to Map for database storage
 

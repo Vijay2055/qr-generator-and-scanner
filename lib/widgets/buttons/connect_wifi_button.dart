@@ -33,7 +33,7 @@ class _ConnectWifiButtonState extends State<ConnectWifiButton> {
     String ssid = match.group(1) ?? "";
     String password = match.group(3) ?? "";
 
-    print("SSID: $ssid | Password: ${password.isEmpty ? 'No Password' : password}");
+
 
     try {
       // Check if Wi-Fi is enabled

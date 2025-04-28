@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:qr_scanner/overlays/QRScannerOverlay.dart';
 
-import 'package:qr_scanner/overlays/scan_window_overlay.dart';
 import 'package:qr_scanner/providers/scan_state.dart';
 import 'package:qr_scanner/utilities/getFomatedDate.dart';
 import 'package:qr_scanner/utility/uint_to_file.dart';
@@ -17,9 +16,6 @@ import 'package:qr_scanner/widgets/scanner_exception_widget.dart';
 import 'package:qr_scanner/screens/scanned_data_screen.dart';
 import 'package:qr_scanner/widgets/zoom_scale_slider.dart';
 
-import 'package:path_provider/path_provider.dart' as syspaths;
-import 'package:path/path.dart' as path;
-
 class QrScanner extends ConsumerStatefulWidget {
   const QrScanner({super.key});
   @override
@@ -28,7 +24,7 @@ class QrScanner extends ConsumerStatefulWidget {
   }
 }
 
-class _QrScannerState extends ConsumerState<QrScanner> {
+class _QrScannerState extends ConsumerState<QrScanner> with WidgetsBindingObserver{
   final AudioPlayer _audioPlayer = AudioPlayer();
   static const useScanWindow = true;
   bool useBarcodeOverlay = true;
@@ -39,6 +35,7 @@ class _QrScannerState extends ConsumerState<QrScanner> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    WidgetsBinding.instance.addObserver(this); // Listen for app lifecycle
     _mobileScannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
       returnImage: true,
@@ -51,18 +48,12 @@ class _QrScannerState extends ConsumerState<QrScanner> {
   }
 
   void onScanned(String rawValue, Uint8List image) async {
-    File imageFile = await uint8ListToFile(image, 'scanned_qr.png');
-    final appDir = await syspaths.getApplicationDocumentsDirectory();
-    final fileName = path.basename(imageFile.path);
-    final copiedImage = await imageFile.copy('${appDir.path}/$fileName');
-
-    // Sca(content: rawValue, date: currentDateTime, image: imageFile);
+    final imagePath = await getFilePath(image);
     final id = await ref
         .read(scanHistoryProvider.notifier)
-        .insertData(rawValue,  copiedImage.path, currentDateTime);
+        .insertData(rawValue, imagePath, currentDateTime);
 
-
-    _mobileScannerController.stop();
+   await _mobileScannerController.stop();
     if (!mounted) {
       return;
     }
@@ -77,17 +68,26 @@ class _QrScannerState extends ConsumerState<QrScanner> {
   @override
   void dispose() {
     // TODO: implement dispose
+    WidgetsBinding.instance.removeObserver(this); // Remove observer
     super.dispose();
     _mobileScannerController.dispose();
   }
 
+ 
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // TODO: implement didChangeAppLifecycleState
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _mobileScannerController.start();
+    } else if (state == AppLifecycleState.paused) {
+      _mobileScannerController.stop();
+    }
+  }
   @override
   Widget build(BuildContext context) {
-    late final scanWindow = Rect.fromCenter(
-      center: MediaQuery.sizeOf(context).center(const Offset(0, -100)),
-      width: 300,
-      height: 250,
-    );
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       // Ensure camera extends behind the AppBar
@@ -120,7 +120,6 @@ class _QrScannerState extends ConsumerState<QrScanner> {
         children: [
           MobileScanner(
             fit: BoxFit.cover,
-            scanWindow: useScanWindow ? scanWindow : null,
             controller: _mobileScannerController,
             onDetect: (capture) {
               final List<Barcode> barcodes = capture.barcodes;
@@ -138,28 +137,23 @@ class _QrScannerState extends ConsumerState<QrScanner> {
 
                   return;
                 }
-              } else {
-                print("Empty barcode");
-              }
+              } 
             },
             errorBuilder: (context, error, dfs) {
               return ScannerErrorWidget(error: error);
             },
           ),
           if (!kIsWeb && useScanWindow)
-            ScanWindowOverlay(
-              scanWindow: scanWindow,
-              controller: _mobileScannerController,
-            ),
+            if (!kIsWeb && useScanWindow)
+            const  QRScannerOverlay(overlayColour: Colors.black54),
+
+
           if (!kIsWeb)
             Positioned(
               left: 0,
               right: 0,
-              bottom: 0,
-              child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 60),
-                  color: const Color.fromRGBO(0, 0, 0, 0.4),
+              bottom: 20,
+              child:  SizedBox(
                   child: ZoomScaleSlider(controller: _mobileScannerController)),
             )
         ],

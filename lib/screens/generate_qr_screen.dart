@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_scanner/data/list_of_generator_cat.dart';
 import 'package:qr_scanner/model.dart/generate_qr_model.dart';
+import 'package:qr_scanner/providers/qr_create_provider.dart';
 import 'package:qr_scanner/screens/create_qr_screen.dart';
 import 'package:qr_scanner/widgets/drawer_menu.dart';
 import 'package:qr_scanner/widgets/generator_item.dart';
 
-class GenerateQrScreen extends StatelessWidget {
+class GenerateQrScreen extends ConsumerWidget {
   const GenerateQrScreen({super.key});
 
-  void _onTap(GenerateQrModel qrModel, BuildContext context) {
+  void _onTap(GenerateQrModel qrModel, BuildContext context, WidgetRef ref) {
+    ref.read(qrProvider.notifier).reset();
+    ref.read(qrProvider.notifier).updateTitle(qrModel.title.name);
+
     Navigator.of(context).push(
         MaterialPageRoute(builder: (ctx) => CreateQrScreen(qrModel: qrModel)));
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Generate"),

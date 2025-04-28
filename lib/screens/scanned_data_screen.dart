@@ -13,8 +13,9 @@ import 'package:qr_scanner/widgets/drawer_menu.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ScannedDataScreen extends ConsumerWidget {
-  const ScannedDataScreen({super.key, required this.id});
+  const ScannedDataScreen({super.key, required this.id,this.isFromOtherScreen=false});
   final int id;
+  final bool isFromOtherScreen;
 
   _launchURLBrowser(String content) async {
     var url = Uri.parse(content);
@@ -78,6 +79,10 @@ class ScannedDataScreen extends ConsumerWidget {
         canPop: false,
         onPopInvokedWithResult: (bool didPop, result) async {
           if (didPop) {
+            return;
+          }
+          if(isFromOtherScreen){
+            Navigator.of(context).pop();
             return;
           }
           Navigator.of(context).pushReplacement(
@@ -175,17 +180,19 @@ class ScannedDataScreen extends ConsumerWidget {
                 SizedBox(
                   child: Card(
                     margin: const EdgeInsets.all(8),
-                    elevation: 10,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Image.file(
-                        File(scanData.image),
-                        width: double.infinity,
-                        height: 400,
-                        fit: BoxFit.cover,
-                      ),
+                    elevation: 2,
+                    child:
+                    Padding(
+                    padding: const EdgeInsets.all(1.0),
+                      child:Image.file(
+                      File(scanData.image),
+                      width: double.infinity,
+                      height: 300,
+                      fit: BoxFit.cover,
+                    ), )
+
                     ),
-                  ),
+
                 )
               ],
             ),

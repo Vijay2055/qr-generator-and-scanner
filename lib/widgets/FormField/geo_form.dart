@@ -26,12 +26,19 @@ class _GeoFormState extends State<GeoForm> {
   }
 
   void _updateParent() {
-    final data = GeoData(
-      latitude: double.parse(_latController.text),
-      longitude: double.parse(_longController.text),
-      query: _queryController.text,
-    );
-    widget.onChange(data);
+    final lat = double.tryParse(_latController.text);
+    final long = double.tryParse(_longController.text);
+
+    if (long != null && lat != null) {
+      final data = GeoData(
+        latitude: lat,
+        longitude: long,
+        query: _queryController.text,
+      );
+      widget.onChange(data);
+    } else {
+      return;
+    }
   }
 
   @override

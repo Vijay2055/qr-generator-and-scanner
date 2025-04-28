@@ -1,13 +1,25 @@
+import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_scanner/model.dart/generate_qr_model.dart';
 import 'package:qr_scanner/model.dart/qr_data/qr_data.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:qr_scanner/model.dart/scann_history_model.dart';
+
+import 'package:qr_scanner/providers/qr_create_provider.dart';
+import 'package:qr_scanner/providers/scan_state.dart';
 import 'package:qr_scanner/utilities/getFomatedDate.dart';
+import 'package:qr_scanner/utility/uint_to_file.dart';
 import 'package:qr_scanner/widgets/buttons/save_share_button.dart';
 
 class QrCodeScreen extends ConsumerStatefulWidget {
-  const QrCodeScreen({super.key, required this.qrData, required this.qrModel});
+  const QrCodeScreen({
+    super.key,
+    required this.qrData,
+    required this.qrModel,
+  });
 
   final QrData qrData;
   final GenerateQrModel qrModel;
@@ -19,23 +31,136 @@ class QrCodeScreen extends ConsumerStatefulWidget {
 class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
   final GlobalKey _globalKey = GlobalKey();
   int? _id;
+
+  TextEditingController? _titleController;
+
   //  final rawValue =widget.qrData?.getData();
 
   @override
   void initState() {
     // TODO: implement initState
+    _titleController = TextEditingController(text: ref.read(qrProvider).title);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(Duration(milliseconds: 300)); // give extra time
+      _autoSaveToHistory();
+    });
     super.initState();
-    _autoSaveQr();
   }
 
-  void _autoSaveQr() {}
+  Future<void> _autoSaveToHistory() async {
+    RenderRepaintBoundary boundary =
+        _globalKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+
+    // Wait until the boundary is ready
+    // if (boundary.debugNeedsPaint) {
+    //   await Future.delayed(const Duration(milliseconds: 100));
+    //   return _autoSaveToHistory(); // Try again after delay
+    // }
+
+    final image = await boundary.toImage();
+    final byteData = await image.toByteData(format: ImageByteFormat.png);
+    final Uint8List pngBytes = byteData!.buffer.asUint8List();
+    final imagePath = await getFilePath(pngBytes);
+
+    if (ref.read(qrProvider).isSaved == false) {
+      _id = await ref
+          .read(scanHistoryProvider.notifier)
+          .insertData(widget.qrData.getData(), imagePath, currentDateTime);
+      if (_id == null) {
+        return;
+      }
+      ref.read(qrProvider.notifier).updateId(_id!, true);
+    } else {
+      _id = ref.read(qrProvider).id;
+
+      if (_id == null) {
+        return;
+      }
+      ScanHistoryModel? prevData =
+          (await ref.read(scanHistoryProvider.notifier).getSingleData(_id!));
+
+      if (prevData == null) {
+        return;
+      }
+
+      if (widget.qrData.getData() == prevData.content) {
+        return;
+      } else {
+        try {
+          await ref
+              .read(scanHistoryProvider.notifier)
+              .updateCont(_id!, widget.qrData.getData(), imagePath);
+        } catch (e) {
+          print('failed to update content due to $e');
+        }
+      }
+    }
+  }
+
+  void saveQrCode() {
+    if (_id != null) {
+      print(_id);
+    }
+  }
+
+  void shareQrCode() {}
+
+  void _onEdit() {
+    showDialog(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text('Title'),
+            content: TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (_titleController == null) {
+                    return;
+                  }
+
+                  ref
+                      .read(qrProvider.notifier)
+                      .updateTitle(_titleController!.text);
+
+                  if (_id != null) {
+                    ref
+                        .read(scanHistoryProvider.notifier)
+                        .updateTitle(_id!, _titleController!.text);
+                  }
+
+                  Navigator.of(context).pop();
+                },
+                child: const Text("Save"),
+              ),
+            ],
+          );
+        });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    if (_titleController != null) {
+      _titleController!.dispose();
+    }
+
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = widget.qrData.toMap();
-    void _saveQrCode() {}
-    void _shareQrCode() {}
-
-    void _autoSaveToHistory() {}
+    final createQrData = ref.watch(qrProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -59,7 +184,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                         width: 10,
                       ),
                       Text(
-                        widget.qrModel.title.name,
+                        createQrData.title!,
                         style: const TextStyle(
                           fontSize: 18,
                         ),
@@ -69,15 +194,27 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                   Row(
                     children: [
                       IconButton(
-                        onPressed: () {},
+                        onPressed: _onEdit,
                         icon: const Icon(Icons.edit),
                       ),
                       const SizedBox(
                         width: 2,
                       ),
                       IconButton(
-                        onPressed: () {},
-                        icon: const Icon(Icons.star_outline),
+                        onPressed: () {
+                          if (_id != null) {
+                            ref
+                                .read(qrProvider.notifier)
+                                .updateIsFav(!createQrData.isFav!);
+
+                            ref
+                                .read(scanHistoryProvider.notifier)
+                                .updateFav(_id!, !createQrData.isFav!);
+                          }
+                        },
+                        icon: Icon(createQrData.isFav == false
+                            ? Icons.star_outline
+                            : Icons.star),
                       ),
                     ],
                   )
@@ -111,7 +248,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                   width: 10,
                 ),
                 SaveShareButton(
-                  onTap: _saveQrCode,
+                  onTap: saveQrCode,
                   title: "Save",
                   icon: Icons.save,
                 ),
@@ -119,7 +256,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                   width: 30,
                 ),
                 SaveShareButton(
-                  onTap: _shareQrCode,
+                  onTap: shareQrCode,
                   icon: Icons.share,
                   title: "Share",
                 ),

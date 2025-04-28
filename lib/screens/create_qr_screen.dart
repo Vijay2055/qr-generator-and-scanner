@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_scanner/model.dart/generate_qr_model.dart';
 import 'package:qr_scanner/model.dart/qr_data/qr_data.dart';
 import 'package:qr_scanner/model.dart/scann_history_model.dart';
+import 'package:qr_scanner/providers/qr_create_provider.dart';
 import 'package:qr_scanner/screens/qr_code_screen.dart';
 import 'package:qr_scanner/widgets/FormField/contact_form.dart';
 import 'package:qr_scanner/widgets/FormField/ean_13_from.dart';
@@ -19,15 +21,15 @@ import 'package:qr_scanner/widgets/common_form.dart';
 import 'package:qr_scanner/widgets/drawer_menu.dart';
 import 'package:qr_scanner/widgets/upc_a_form.dart';
 
-class CreateQrScreen extends StatefulWidget {
+class CreateQrScreen extends ConsumerStatefulWidget {
   const CreateQrScreen({super.key, required this.qrModel});
   final GenerateQrModel qrModel;
 
   @override
-  State<CreateQrScreen> createState() => _CreateQrScreenState();
+  ConsumerState<CreateQrScreen> createState() => _CreateQrScreenState();
 }
 
-class _CreateQrScreenState extends State<CreateQrScreen> {
+class _CreateQrScreenState extends ConsumerState<CreateQrScreen> {
   final _formKey = GlobalKey<FormState>();
   QrData? qrData;
 
@@ -168,57 +170,61 @@ class _CreateQrScreenState extends State<CreateQrScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create'),
-        actions: [
-          IconButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  if (qrData == null) {
-                    return;
+    return  Scaffold(
+        appBar: AppBar(
+          title: const Text('Create'),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    if (qrData == null) {
+                      return;
+                    }
+
+                    ref
+                        .read(qrProvider.notifier)
+                        .updateContent(qrData!.getData());
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => QrCodeScreen(
+                              qrData: qrData!,
+                              qrModel: widget.qrModel,
+                            )));
                   }
-                 
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) => QrCodeScreen(
-                            qrData: qrData!,
-                            qrModel: widget.qrModel,
-                          )));
-                }
-              },
-              icon: const Icon(Icons.done))
-        ],
-      ),
-      drawer: const DrawerMenu(isFromScan: false),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Icon(widget.qrModel.icon),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      widget.qrModel.title.name[0].toUpperCase() +
-                          widget.qrModel.title.name.substring(1),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ],
-                ),
-                const SizedBox(
-                  height: 20,
-                ),
-                _buildFromFields(),
-              ],
+                },
+                icon: const Icon(Icons.done))
+          ],
+        ),
+        drawer: const DrawerMenu(isFromScan: false),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(widget.qrModel.icon),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Text(
+                        widget.qrModel.title.name[0].toUpperCase() +
+                            widget.qrModel.title.name.substring(1),
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  _buildFromFields(),
+                ],
+              ),
             ),
           ),
         ),
-      ),
+      
     );
   }
 }
