@@ -58,7 +58,7 @@ class GenerateQrScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 16),
               ),
             ),
-            Card(
+             Card(
               child: Column(
                 children: list_other_generator_type
                     .map((item) => GeneratorItem(
@@ -69,6 +69,8 @@ class GenerateQrScreen extends ConsumerWidget {
                         ))
                     .toList(),
               ),
+
+              // child: 
             ),
             const SizedBox(
               height: 30,

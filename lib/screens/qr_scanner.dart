@@ -7,7 +7,7 @@ import 'package:qr_scanner/overlays/QRScannerOverlay.dart';
 
 import 'package:qr_scanner/providers/scan_state.dart';
 import 'package:qr_scanner/utilities/getFomatedDate.dart';
-import 'package:qr_scanner/utility/uint_to_file.dart';
+import 'package:qr_scanner/utilities/uint_to_file.dart';
 import 'package:qr_scanner/widgets/buttons/analyze_image_button.dart';
 import 'package:qr_scanner/widgets/buttons/switch_camera_button.dart';
 import 'package:qr_scanner/widgets/buttons/toogle_flashlight_button.dart';

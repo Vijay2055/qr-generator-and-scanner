@@ -11,7 +11,7 @@ final list_qr_generator_type = [
   GenerateQrModel(title: Category.email, icon: Icons.email),
   GenerateQrModel(title: Category.sms, icon: Icons.sms),
   GenerateQrModel(title: Category.geo, icon: Icons.location_on_outlined),
-
+  GenerateQrModel(title: Category.phone, icon: Icons.phone),
 ];
 
 final list_other_generator_type = [

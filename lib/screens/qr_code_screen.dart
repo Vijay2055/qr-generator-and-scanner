@@ -7,22 +7,26 @@ import 'package:qr_scanner/model.dart/generate_qr_model.dart';
 import 'package:qr_scanner/model.dart/qr_data/qr_data.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:qr_scanner/model.dart/scann_history_model.dart';
-
 import 'package:qr_scanner/providers/qr_create_provider.dart';
 import 'package:qr_scanner/providers/scan_state.dart';
 import 'package:qr_scanner/utilities/getFomatedDate.dart';
-import 'package:qr_scanner/utility/uint_to_file.dart';
+import 'package:qr_scanner/utilities/save_to_gallery.dart';
+import 'package:qr_scanner/utilities/uint_to_file.dart';
+import 'package:qr_scanner/widgets/barcode_generator.dart';
 import 'package:qr_scanner/widgets/buttons/save_share_button.dart';
+import 'package:share_plus/share_plus.dart';
 
 class QrCodeScreen extends ConsumerStatefulWidget {
   const QrCodeScreen({
     super.key,
     required this.qrData,
     required this.qrModel,
+    this.isBarcode = false,
   });
 
   final QrData qrData;
   final GenerateQrModel qrModel;
+  final isBarcode;
 
   @override
   ConsumerState<QrCodeScreen> createState() => _QrCodeScreenState();
@@ -31,7 +35,7 @@ class QrCodeScreen extends ConsumerStatefulWidget {
 class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
   final GlobalKey _globalKey = GlobalKey();
   int? _id;
-
+  String? imagePath;
   TextEditingController? _titleController;
 
   //  final rawValue =widget.qrData?.getData();
@@ -41,7 +45,8 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
     // TODO: implement initState
     _titleController = TextEditingController(text: ref.read(qrProvider).title);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await Future.delayed(Duration(milliseconds: 300)); // give extra time
+      await Future.delayed(
+          const Duration(milliseconds: 300)); // give extra time
       _autoSaveToHistory();
     });
     super.initState();
@@ -60,12 +65,12 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
     final image = await boundary.toImage();
     final byteData = await image.toByteData(format: ImageByteFormat.png);
     final Uint8List pngBytes = byteData!.buffer.asUint8List();
-    final imagePath = await getFilePath(pngBytes);
+    imagePath = await getFilePath(pngBytes);
 
     if (ref.read(qrProvider).isSaved == false) {
       _id = await ref
           .read(scanHistoryProvider.notifier)
-          .insertData(widget.qrData.getData(), imagePath, currentDateTime);
+          .insertData(widget.qrData.getData(), imagePath!, currentDateTime);
       if (_id == null) {
         return;
       }
@@ -89,7 +94,7 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
         try {
           await ref
               .read(scanHistoryProvider.notifier)
-              .updateCont(_id!, widget.qrData.getData(), imagePath);
+              .updateCont(_id!, widget.qrData.getData(), imagePath!);
         } catch (e) {
           print('failed to update content due to $e');
         }
@@ -97,13 +102,23 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
     }
   }
 
-  void saveQrCode() {
-    if (_id != null) {
-      print(_id);
+  void shareQrCode() async {
+    String message = "Your qr_code can't share";
+    try {
+      final sharparams = ShareParams(
+          text: 'Qr_Scanner',
+          files: [XFile(imagePath!, mimeType: 'image/png')]);
+      final result = await SharePlus.instance.share(sharparams);
+      if (result.status == ShareResultStatus.success) {
+        message = 'Thank you for sharing your qr_code';
+      }
+    } catch (e) {
+      message = "Can't share due to $e";
     }
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
-
-  void shareQrCode() {}
 
   void _onEdit() {
     showDialog(
@@ -231,11 +246,19 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
               decoration: const BoxDecoration(
                   color: Color.fromARGB(123, 175, 171, 171)),
               height: 350,
-              child: RepaintBoundary(
-                key: _globalKey,
-                child: QrImageView(
-                  data: widget.qrData.getData(),
-                  size: 250,
+              child: Container(
+                color: Colors.white,
+                child: RepaintBoundary(
+                  key: _globalKey,
+                  child: widget.isBarcode
+                      ? Center(
+                          child: BarcodeGenerator(data: widget.qrData))
+                      : QrImageView(
+                          data: widget.qrData.getData(),
+                          size: 250,
+                          backgroundColor: Colors
+                              .white, // add backgroundColor inside QrImage
+                        ),
                 ),
               ),
             ),
@@ -248,7 +271,12 @@ class _QrCodeScreenState extends ConsumerState<QrCodeScreen> {
                   width: 10,
                 ),
                 SaveShareButton(
-                  onTap: saveQrCode,
+                  onTap: () {
+                    if (imagePath == null) {
+                      return;
+                    }
+                    saveToGallary(imagePath!, context);
+                  },
                   title: "Save",
                   icon: Icons.save,
                 ),

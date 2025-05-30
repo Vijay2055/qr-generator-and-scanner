@@ -12,7 +12,7 @@ class CreateQrModel {
     return CreateQrModel(
         title: title ?? this.title,
         isFav: isFav ?? this.isFav,
-        isSaved: isSave ?? this.isSaved,
+        isSaved: isSave ?? isSaved,
         id: id ?? this.id,
         content: content ?? this.content);
   }

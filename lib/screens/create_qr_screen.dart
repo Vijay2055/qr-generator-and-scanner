@@ -5,21 +5,27 @@ import 'package:qr_scanner/model.dart/qr_data/qr_data.dart';
 import 'package:qr_scanner/model.dart/scann_history_model.dart';
 import 'package:qr_scanner/providers/qr_create_provider.dart';
 import 'package:qr_scanner/screens/qr_code_screen.dart';
+import 'package:qr_scanner/widgets/FormField/aztec_form.dart';
+import 'package:qr_scanner/widgets/FormField/code93_form.dart';
+import 'package:qr_scanner/widgets/FormField/code_128_form.dart';
+import 'package:qr_scanner/widgets/FormField/codebar_form.dart';
 import 'package:qr_scanner/widgets/FormField/contact_form.dart';
+import 'package:qr_scanner/widgets/FormField/data_matrix_form.dart';
 import 'package:qr_scanner/widgets/FormField/ean_13_from.dart';
 import 'package:qr_scanner/widgets/FormField/ean_8_form.dart';
 import 'package:qr_scanner/widgets/FormField/email_form.dart';
 import 'package:qr_scanner/widgets/FormField/geo_form.dart';
 import 'package:qr_scanner/widgets/FormField/itf_form.dart';
+import 'package:qr_scanner/widgets/FormField/pdf_417_form.dart';
 import 'package:qr_scanner/widgets/FormField/phone_form.dart';
 import 'package:qr_scanner/widgets/FormField/sms_form.dart';
 import 'package:qr_scanner/widgets/FormField/text_form.dart';
 import 'package:qr_scanner/widgets/FormField/upc_e.dart';
 import 'package:qr_scanner/widgets/FormField/url_form.dart';
 import 'package:qr_scanner/widgets/FormField/wifi_from.dart';
-import 'package:qr_scanner/widgets/common_form.dart';
+import 'package:qr_scanner/widgets/FormField/code39_form.dart';
 import 'package:qr_scanner/widgets/drawer_menu.dart';
-import 'package:qr_scanner/widgets/upc_a_form.dart';
+import 'package:qr_scanner/widgets/FormField/upc_a_form.dart';
 
 class CreateQrScreen extends ConsumerStatefulWidget {
   const CreateQrScreen({super.key, required this.qrModel});
@@ -36,7 +42,7 @@ class _CreateQrScreenState extends ConsumerState<CreateQrScreen> {
   void onChange(QrData data) {
     qrData = data;
   }
-
+ 
   Widget _buildFromFields() {
     final title = widget.qrModel.title;
     switch (title) {
@@ -118,19 +124,19 @@ class _CreateQrScreenState extends ConsumerState<CreateQrScreen> {
           },
         );
       case Category.code_39:
-        return CommonForm(
+        return Code39Form(
           onChange: (QrData data) {
             onChange(data);
           },
         );
       case Category.code_93:
-        return CommonForm(
+        return Code93Form(
           onChange: (QrData data) {
             onChange(data);
           },
         );
       case Category.code_128:
-        return CommonForm(
+        return Code128Form(
           onChange: (QrData data) {
             onChange(data);
           },
@@ -142,25 +148,25 @@ class _CreateQrScreenState extends ConsumerState<CreateQrScreen> {
           },
         );
       case Category.pdf_417:
-        return CommonForm(
+        return Pdf417Form(
           onChange: (QrData data) {
             onChange(data);
           },
         );
       case Category.codebar:
-        return CommonForm(
+        return CodebarForm(
           onChange: (QrData data) {
             onChange(data);
-          },
+          }, 
         );
       case Category.data_matrix:
-        return CommonForm(
+        return DataMatrixForm(
           onChange: (QrData data) {
             onChange(data);
           },
         );
       case Category.aztec:
-        return CommonForm(
+        return AztecForm(
           onChange: (QrData data) {
             onChange(data);
           },
@@ -188,6 +194,7 @@ class _CreateQrScreenState extends ConsumerState<CreateQrScreen> {
                         builder: (ctx) => QrCodeScreen(
                               qrData: qrData!,
                               qrModel: widget.qrModel,
+                              isBarcode: qrData!.isBarcode,
                             )));
                   }
                 },

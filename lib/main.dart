@@ -10,6 +10,7 @@ ThemeData ktheme = ThemeData.dark().copyWith(
   ),
   scaffoldBackgroundColor: const Color.fromARGB(255, 50, 58, 60),
 );
+
 void main() {
   runApp(const ProviderScope(child: MyApp()));
 }

@@ -8,7 +8,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_scanner/providers/scan_state.dart';
 import 'package:qr_scanner/screens/scanned_data_screen.dart';
 import 'package:qr_scanner/utilities/getFomatedDate.dart';
-import 'package:qr_scanner/utility/uint_to_file.dart';
+import 'package:qr_scanner/utilities/uint_to_file.dart';
 
 /// Button widget for analyze image function
 class AnalyzeImageButton extends ConsumerStatefulWidget {
